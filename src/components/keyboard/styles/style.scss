@@ -1,9 +1,129 @@
 @import 'normalize';
 
-:root {
-  --bg-color: red;
+.centralizer {
+  margin: 0 auto;
+  font-family: "Trebuchet MS", "Helvetica", sans-serif
 }
 
-body {
-  background-color: var(--bg-color);
+.textarea {
+  display: block;
+  width: 700px;
+  height: 200px;
+  margin: 10px auto 10px;
+  padding: 10px;
+  font-size: 18px;
+  color: #444444
+}
+
+.caseDown,
+.caseUp,
+.shiftCaps,
+.caps {
+  display: block;
+  width: 100;
+  min-height: 40px
+}
+
+.hidden {
+  display: none
+}
+
+.description,
+.language,
+.title {
+  margin: 10px auto;
+  text-align: center
+}
+
+.title {
+  font-size: 30px;
+  color: rgba(101, 134, 177, 0.8);
+  -webkit-text-stroke: 1px rgba(114, 177, 101, 0.8);
+  -webkit-text-fill-color: rgba(101, 134, 177, 0.8)
+}
+
+.keyboard {
+  width: 704px;
+  margin: 0 auto;
+  padding: 5px;
+  padding-left: 0;
+  padding-bottom: 0;
+  background: #888888;
+  border: 3px solid #222222;
+  border-radius: 5px
+}
+
+.keyboard .row {
+  clear: both;
+  width: 100%;
+  height: 40px;
+  margin-bottom: 8px
+}
+
+.keyboard .key {
+  float: left;
+  width: 40px;
+  height: 40px;
+  margin-left: 6px;
+  font-weight: 500;
+  line-height: 40px;
+  text-align: center;
+  color: #ffffff;
+  background: #444444;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  transition: border-radius 0.3s, background-color 0.3s
+}
+
+.keyboard .key:hover {
+  background: #79aa89
+}
+
+.keyboard .key.active {
+  background-color: #2cfd72;
+  border-radius: 50px
+}
+
+.keyboard .AltLeft,
+.keyboard .AltRight,
+.keyboard .ArrowUp,
+.keyboard .ArrowLeft,
+.keyboard .ArrowDown,
+.keyboard .ArrowRight,
+.keyboard .Backspace,
+.keyboard .CapsLock,
+.keyboard .ControlLeft,
+.keyboard .ControlRight,
+.keyboard .Delete,
+.keyboard .Enter,
+.keyboard .ShiftLeft,
+.keyboard .ShiftRight,
+.keyboard .Tab,
+.keyboard .MetaLeft {
+  font-weight: 600;
+  background-color: #222222
+}
+
+.keyboard .Tab {
+  width: 50px
+}
+
+.keyboard .Backspace,
+.keyboard .CapsLock,
+.keyboard .ShiftLeft {
+  width: 100px
+}
+
+.keyboard .Delete {
+  width: 44px
+}
+
+.keyboard .Enter,
+.keyboard .ShiftRight {
+  width: 86px
+}
+
+.keyboard .Space {
+  width: 330px
 }

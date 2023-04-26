@@ -7,10 +7,13 @@ export default class DomBuilder {
    * @return {HTMLElement}
    */
   static createElement({
-    element, classList, innerText = null, attributes = {},
+    element, classList = [], innerText = null, attributes = {},
   }) {
     const el = document.createElement(element);
-    classList.forEach((className) => el.classList.add(className));
+
+    if (classList.length > 0) {
+      classList.forEach((className) => el.classList.add(className));
+    }
 
     el.innerText = innerText ?? '';
 

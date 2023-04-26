@@ -826,13 +826,15 @@ ORDINARY_KEYS.push([{
   },
 }, {
   className: 'ArrowDown',
-  eng: {
-    caseDown: '▼',
-    caseUp: '▼',
-  },
-  rus: {
-    caseDown: '▼',
-    caseUp: '▼',
+  lang: {
+    eng: {
+      caseDown: '▼',
+      caseUp: '▼',
+    },
+    rus: {
+      caseDown: '▼',
+      caseUp: '▼',
+    },
   },
 }, {
   className: 'ArrowRight',
