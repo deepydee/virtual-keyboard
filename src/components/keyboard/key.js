@@ -5,6 +5,7 @@ export default class Key {
     this.attributes = attributes;
     this.currentLang = currentLang;
     this.currentCase = currentCase;
+    this.key = null;
   }
 
   render() {
@@ -61,6 +62,19 @@ export default class Key {
       key.append(keyNode);
     }
 
+    this.key = key;
     return key;
+  }
+
+  flash() {
+    this.key.classList.add('active');
+  }
+
+  unflash() {
+    this.key.classList.remove('active');
+  }
+
+  getKey() {
+    return this.attributes.lang[this.currentLang][this.currentCase];
   }
 }

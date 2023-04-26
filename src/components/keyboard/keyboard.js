@@ -1,30 +1,28 @@
-import keys from '../../data/keys.js';
+import KEYS from '../../data/keys.js';
 import Key from './key.js';
 import DomBuilder from '../../helpers/DomBuilder.js';
 
 export default class Keyboard {
   constructor() {
-    this.element = null;
+    this.keyboard = null;
+    this.keys = {};
     this.textarea = null;
+
     this.state = {
       isShiftLeftPressed: false,
       isShiftRightPressed: false,
       isCapsLockPressed: false,
-      case: 'caseDown',
-      lang: 'eng',
+      currentKey: null,
+      case: 'caseUp',
+      lang: 'rus',
     };
-    this.current = {
-      element: null,
-      code: null,
-      event: null,
-      char: null,
-    };
-    this.previous = {
-      element: null,
-      code: null,
-      event: null,
-      char: null,
-    };
+
+    this.render();
+
+    this.mouseDownHandler = this.mouseDown.bind(this);
+    this.mouseUpHandler = this.mouseUp.bind(this);
+    this.keyboard.addEventListener('mousedown', this.mouseDownHandler);
+    this.keyboard.addEventListener('mouseup', this.mouseUpHandler);
   }
 
   render() {
@@ -51,6 +49,9 @@ export default class Keyboard {
         cols: '50',
       },
     });
+
+    textarea.autofocus = true;
+    this.textarea = textarea;
     centralizer.append(textarea);
 
     const keyboard = DomBuilder.createElement({
@@ -59,26 +60,47 @@ export default class Keyboard {
       attributes: { id: 'keyboard' },
     });
 
-    keys.ROWS.forEach((row) => {
+    KEYS.ROWS.forEach((row) => {
       const kbdRow = DomBuilder.createElement({
         element: 'div',
         classList: ['keyboard--row', 'row'],
       });
 
       row.forEach((attributes) => {
+        const key = new Key(
+          { attributes },
+          this.state.lang,
+          this.state.case,
+        );
+        this.keys[attributes.className] = key;
+
         kbdRow.append(
-          new Key(
-            { attributes },
-            this.state.lang,
-            this.state.case,
-          ).render(),
+          key.render(),
         );
       });
 
       keyboard.append(kbdRow);
     });
 
+    this.keyboard = keyboard;
     centralizer.append(keyboard);
     body.append(centralizer);
+  }
+
+  mouseDown(event) {
+    const target = event.target.closest('.key');
+
+    if (!target) return;
+
+    const keyCode = target.classList[target.classList.length - 1];
+    const key = this.keys[keyCode];
+    this.state.currentKey = key;
+
+    this.textarea.textContent += key.getKey();
+    key.flash();
+  }
+
+  mouseUp() {
+    this.state.currentKey.unflash();
   }
 }
