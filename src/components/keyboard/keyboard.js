@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import KEYS from '../../data/keys.js';
 import Key from './key.js';
 import DomBuilder from '../../helpers/DomBuilder.js';
@@ -14,18 +15,45 @@ export default class Keyboard {
       isCapsLockPressed: false,
       currentKey: null,
       case: 'caseDown',
-      lang: 'rus',
+      lang: 'eng',
     };
 
-    this.render();
+    this.current = {
+      key: null,
+      code: null,
+      event: null,
+      char: null,
+    };
 
-    this.mouseDownHandler = this.mouseDown.bind(this);
-    this.mouseUpHandler = this.mouseUp.bind(this);
-    this.keyboard.addEventListener('mousedown', this.mouseDownHandler);
-    this.keyboard.addEventListener('mouseup', this.mouseUpHandler);
+    this.previous = {
+      key: null,
+      code: null,
+      event: null,
+      char: null,
+    };
   }
 
-  render() {
+  init() {
+    this.#render();
+    this.#initLanguage();
+
+    this.mouseDownHandler = this.#mouseDown.bind(this);
+    this.mouseUpHandler = this.#mouseUp.bind(this);
+    this.keyDownHandler = this.#keyDown.bind(this);
+    this.keyUpHandler = this.#keyUp.bind(this);
+
+    this.keyboard.addEventListener('mousedown', this.mouseDownHandler);
+    this.keyboard.addEventListener('mouseup', this.mouseUpHandler);
+    document.addEventListener('keydown', this.keyDownHandler);
+    document.addEventListener('keyup', this.keyUpHandler);
+  }
+
+  #initLanguage() {
+    this.state.lang = localStorage.lang ?? this.state.lang;
+    this.#updateLanguage();
+  }
+
+  #render() {
     const { body } = document;
     body.classList.add('body');
     const centralizer = DomBuilder.createElement({
@@ -67,11 +95,8 @@ export default class Keyboard {
       });
 
       row.forEach((attributes) => {
-        const isService = KEYS.SERVICE_KEYS.includes(attributes.className);
-
         const key = new Key(
           { attributes },
-          isService,
           this.state.lang,
           this.state.case,
         );
@@ -105,8 +130,10 @@ export default class Keyboard {
     body.append(centralizer);
   }
 
-  implementKey(keyKode, key) {
-    switch (keyKode) {
+  implementSerciceKey(keyCode, key) {
+    if (!this.#isService(keyCode)) return;
+
+    switch (keyCode) {
       case 'Backspace':
         break;
       case 'Delete':
@@ -123,8 +150,11 @@ export default class Keyboard {
       case 'ShiftRight':
         break;
       default:
-        throw new Error('Unknown service key has been pressed');
     }
+  }
+
+  #isService(code) {
+    return KEYS.SERVICE_KEYS.includes(code);
   }
 
   toggleCaps() {
@@ -134,7 +164,7 @@ export default class Keyboard {
     } else {
       this.keys.CapsLock.unsetActive();
     }
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const key of Object.values(this.keys)) {
       key.toggleCaps();
     }
@@ -142,26 +172,73 @@ export default class Keyboard {
     console.dir(this.keys);
   }
 
-  mouseDown(event) {
-    const target = event.target.closest('.key');
+  toggleLanguage() {
+    this.state.lang = this.state.lang === 'eng'
+      ? 'rus'
+      : 'eng';
 
-    if (!target) return;
+    localStorage.setItem('lang', this.state.lang);
+    this.#updateLanguage();
+  }
 
-    const keyCode = target.dataset.keycode;
-    const key = this.keys[keyCode];
-    this.state.currentKey = key;
-
-    if (key.isServiceKey()) {
-      this.implementKey(keyCode, key);
-    } else {
-      key.setActive();
-      this.textarea.textContent += key.getChar();
+  #updateLanguage() {
+    for (const key of Object.values(this.keys)) {
+      key.toggleLanguage();
     }
   }
 
-  mouseUp() {
-    if (!this.state.currentKey.isServiceKey()) {
-      this.state.currentKey.unsetActive();
+  #updateCurrentKeyState({ code, event = null }) {
+    this.previous = { ...this.current };
+
+    this.current.code = code;
+    this.current.key = this.keys[code];
+    this.current.char = this.current.key.getChar();
+    this.current.event = event;
+  }
+
+  #processKeyDown() {
+    if (this.#isService(this.current.code)) {
+      this.implementSerciceKey(this.current.code, this.current.key);
+    } else {
+      this.current.key.setActive();
+      this.textarea.textContent += this.current.key.getChar();
     }
+  }
+
+  #processKeyUp() {
+    if (!this.#isService(this.current.char)) {
+      this.current.key.unsetActive();
+    }
+  }
+
+  #mouseDown(event) {
+    const target = event.target.closest('.key');
+    if (!target) return;
+
+    this.#updateCurrentKeyState({
+      code: target.dataset.keycode,
+      event,
+    });
+
+    this.#processKeyDown(this.current.code);
+  }
+
+  #mouseUp() {
+    this.#processKeyUp();
+  }
+
+  #keyDown(event) {
+    event.preventDefault();
+
+    this.#updateCurrentKeyState({
+      code: event.code,
+      event,
+    });
+
+    this.#processKeyDown(this.current.code);
+  }
+
+  #keyUp() {
+    this.#processKeyUp();
   }
 }

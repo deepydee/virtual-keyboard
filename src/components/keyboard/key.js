@@ -1,14 +1,13 @@
+/* eslint-disable no-restricted-syntax */
 import DomBuilder from '../../helpers/DomBuilder.js';
 
 export default class Key {
   constructor(
     { attributes },
-    isService,
     currentLang = 'eng',
     currentCase = 'caseDown',
   ) {
     this.attributes = attributes;
-    this.isService = isService;
     this.currentLang = currentLang;
     this.currentCase = currentCase;
     this.#setChar();
@@ -22,7 +21,6 @@ export default class Key {
       attributes: { 'data-keycode': this.attributes.className },
     });
 
-    // eslint-disable-next-line no-restricted-syntax
     for (const [lang, langSettings] of Object.entries(this.attributes.lang)) {
       const keyNode = DomBuilder.createElement({
         element: 'span',
@@ -74,6 +72,24 @@ export default class Key {
     return key;
   }
 
+  rerender() {
+    [...this.key.children].map((el) => (el.classList.contains(this.currentLang)
+      ? el.classList.remove('hidden')
+      : el.classList.add('hidden')));
+
+    [...this.key.children].forEach((el) => {
+      if (el.classList.contains(this.currentLang)) {
+        [...el.children].map((e) => (e.classList.contains(this.currentCase)
+          ? e.classList.remove('hidden')
+          : e.classList.add('hidden')));
+      }
+    });
+  }
+
+  getChar() {
+    return this.char;
+  }
+
   #setChar() {
     switch (this.currentCase) {
       case 'caps':
@@ -90,8 +106,8 @@ export default class Key {
     }
   }
 
-  getChar() {
-    return this.char;
+  getCode() {
+    return this.attributes.className;
   }
 
   toggleCaps() {
@@ -103,20 +119,17 @@ export default class Key {
     this.rerender();
   }
 
-  rerender() {
-    [...this.key.children].forEach((el) => {
-      if (el.classList.contains(this.currentLang)) {
-        [...el.children].map((e) => (e.classList.contains(this.currentCase)
-          ? e.classList.remove('hidden')
-          : e.classList.add('hidden')));
-      }
-    });
-  }
-
-  toggleLang() {
-    this.currentCase = this.currentLang === 'eng'
+  toggleLanguage() {
+    this.currentLang = this.currentLang === 'eng'
       ? 'rus'
       : 'eng';
+
+    this.#setChar();
+    this.rerender();
+  }
+
+  toggleActive() {
+    this.key.classList.toggle('active');
   }
 
   setActive() {
@@ -125,13 +138,5 @@ export default class Key {
 
   unsetActive() {
     this.key.classList.remove('active');
-  }
-
-  toggleActive() {
-    this.key.classList.toggle('active');
-  }
-
-  isServiceKey() {
-    return this.isService;
   }
 }
