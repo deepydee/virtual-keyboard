@@ -177,8 +177,18 @@ export default class Keyboard {
           this.toggleCaps();
           break;
         case 'ShiftLeft':
+          if (!this.state.isShiftLeftPressed && !this.state.isShiftRightPressed) {
+            this.state.isShiftLeftPressed = true;
+            this.current.key.setActive();
+            this.toggleCase();
+          }
           break;
         case 'ShiftRight':
+          if (!this.state.isShiftRightPressed && !this.state.isShiftLeftPressed) {
+            this.state.isShiftRightPressed = true;
+            this.current.key.setActive();
+            this.toggleCase();
+          }
           break;
         default:
       }
