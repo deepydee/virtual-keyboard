@@ -170,6 +170,8 @@ export default class Keyboard {
           insertChar();
           break;
         case 'Enter':
+          this.current.char = '\n';
+          insertChar();
           break;
         case 'CapsLock':
           this.toggleCaps();
