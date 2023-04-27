@@ -35,6 +35,18 @@
   text-align: center
 }
 
+.language {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  column-gap: 20px;
+}
+
+.flag {
+  height: 100px;
+  width: 100px;
+}
+
 .title {
   font-size: 30px;
   color: rgba(101, 134, 177, 0.8);

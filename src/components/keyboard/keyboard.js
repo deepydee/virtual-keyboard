@@ -1,5 +1,7 @@
 /* eslint-disable no-restricted-syntax */
 import KEYS from '../../data/keys.js';
+import rusFlagSvg from './assets/svg/rus.svg';
+import engFlagSvg from './assets/svg/eng.svg';
 import Key from './key.js';
 import DomBuilder from '../../helpers/DomBuilder.js';
 
@@ -41,16 +43,19 @@ export default class Keyboard {
     this.mouseUpHandler = this.#mouseUp.bind(this);
     this.keyDownHandler = this.#keyDown.bind(this);
     this.keyUpHandler = this.#keyUp.bind(this);
+    this.toggleLanguageOnClickHandler = this.toggleLanguage.bind(this);
 
     this.keyboard.addEventListener('mousedown', this.mouseDownHandler);
     this.keyboard.addEventListener('mouseup', this.mouseUpHandler);
     document.addEventListener('keydown', this.keyDownHandler);
     document.addEventListener('keyup', this.keyUpHandler);
+    this.flag.addEventListener('click', this.toggleLanguageOnClickHandler);
   }
 
   #initLanguage() {
     this.state.lang = localStorage.lang ?? this.state.lang;
     this.#updateLanguage();
+    this.#setLanguageFlag();
   }
 
   #render() {
@@ -121,13 +126,39 @@ export default class Keyboard {
     centralizer.append(description);
 
     const language = DomBuilder.createElement({
-      element: 'p',
-      innerText: 'Для переключения языка комбинация: левыe ctrl + alt',
+      element: 'div',
       classList: ['language'],
     });
+
+    const languageLink = DomBuilder.createElement({
+      element: 'a',
+      classList: ['flag'],
+    });
+    languageLink.href = '#!';
+
+    this.flag = DomBuilder.createElement({
+      element: 'img',
+    });
+
+    this.#setLanguageFlag();
+
+    const langDescription = DomBuilder.createElement({
+      element: 'span',
+      innerText: 'Для переключения языка комбинация: левыe Ctrl + Shift, либо клик по флагу',
+    });
+
+    languageLink.append(this.flag);
+    language.append(languageLink, langDescription);
+
     centralizer.append(language);
 
     body.append(centralizer);
+  }
+
+  #setLanguageFlag() {
+    this.flag.src = this.state.lang === 'eng'
+      ? engFlagSvg
+      : rusFlagSvg;
   }
 
   #applyKey() {
@@ -195,6 +226,10 @@ export default class Keyboard {
     } else {
       insertChar();
     }
+
+    if (this.current.event.ctrlKey && this.current.event.shiftKey) {
+      this.toggleLanguage();
+    }
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -247,8 +282,12 @@ export default class Keyboard {
 
   #updateLanguage() {
     for (const key of Object.values(this.keys)) {
-      key.toggleLanguage();
+      key.changeLanguage(this.state.lang);
     }
+
+    this.flag.src = this.state.lang === 'eng'
+      ? engFlagSvg
+      : rusFlagSvg;
   }
 
   #updateCurrentKeyState({ code, event = null }) {

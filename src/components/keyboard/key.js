@@ -117,10 +117,8 @@ export default class Key {
     this.rerender();
   }
 
-  toggleLanguage() {
-    this.currentLang = this.currentLang === 'eng'
-      ? 'rus'
-      : 'eng';
+  changeLanguage(lang) {
+    this.currentLang = lang;
 
     this.#setChar();
     this.rerender();
