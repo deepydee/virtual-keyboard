@@ -193,12 +193,12 @@ export default class Keyboard {
   }
 
   toggleCaps() {
+    this.state.isCapsLockPressed = !this.state.isCapsLockPressed;
     this.state.case = this.state.case === 'caps'
       ? 'caseDown'
       : 'caps';
 
-    this.state.isCapsLockPressed = !this.state.isCapsLockPressed;
-    if (this.state.isCapsLockPressed) {
+    if (this.state.isCapsLockPressed) { // && !this.current.event.repeat
       this.keys.CapsLock.setActive();
     } else {
       this.keys.CapsLock.unsetActive();
