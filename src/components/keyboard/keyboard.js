@@ -165,6 +165,8 @@ export default class Keyboard {
     let text = this.textarea.value;
     const start = this.textarea.selectionStart;
 
+    console.log('before ', text, this.textarea.selectionStart, this.textarea.selectionEnd);
+
     const insertChar = () => {
       if (start > 0 && start <= text.length) {
         this.textarea.value = text.slice(0, start)
@@ -230,6 +232,8 @@ export default class Keyboard {
     if (this.current.event.ctrlKey && this.current.event.shiftKey) {
       this.toggleLanguage();
     }
+
+    console.log('after ', text, this.textarea.selectionStart, this.textarea.selectionEnd);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -252,14 +256,7 @@ export default class Keyboard {
     for (const key of Object.values(this.keys)) {
       key.changeCase(this.state.case);
     }
-    // console.dir(this.keys);
   }
-
-  // updateKeysState(callback, ...args) {
-  //   for (const key of Object.values(this.keys)) {
-  //     key.callback.call(this, ...args);
-  //   }
-  // }
 
   toggleCase() {
     this.state.case = this.state.case === 'caseDown'
@@ -340,38 +337,46 @@ export default class Keyboard {
   #keyDown(event) {
     event.preventDefault();
 
-    this.#updateCurrentKeyState({
-      code: event.code,
-      event,
-    });
+    const isKeyExistsWithin = this.keyboard.querySelector(`.${event.code}`);
 
-    this.#applyKey();
+    if (isKeyExistsWithin) {
+      this.#updateCurrentKeyState({
+        code: event.code,
+        event,
+      });
 
-    if (this.current.code !== 'CapsLock') {
-      this.current.key.setActive();
-    }
+      this.#applyKey();
 
-    if (this.current.code === 'MetaLeft') {
-      this.current.key.setActive();
-      setTimeout(() => {
-        this.current.key.unsetActive();
-      }, 500);
-    } else if (['ShiftLeft', 'ShiftRight'].includes(this.current.code)) {
-      this.current.key.setActive();
+      if (this.current.code !== 'CapsLock') {
+        this.current.key.setActive();
+      }
+
+      if (this.current.code === 'MetaLeft') {
+        this.current.key.setActive();
+        setTimeout(() => {
+          this.current.key.unsetActive();
+        }, 500);
+      } else if (['ShiftLeft', 'ShiftRight'].includes(this.current.code)) {
+        this.current.key.setActive();
+      }
     }
   }
 
   #keyUp(event) {
-    if (event.code !== 'CapsLock') {
-      this.current.key.unsetActive();
-    }
+    const isKeyExistsWithin = this.keyboard.querySelector(`.${event.code}`);
 
-    if (event.code === 'ShiftLeft') {
-      this.state.isShiftLeftPressed = false;
-      this.current.key.unsetActive();
-    } else if (event.code === 'ShiftRight') {
-      this.state.isShiftRightPressed = false;
-      this.current.key.unsetActive();
+    if (isKeyExistsWithin) {
+      if (event.code !== 'CapsLock') {
+        this.current.key.unsetActive();
+      }
+
+      if (event.code === 'ShiftLeft') {
+        this.state.isShiftLeftPressed = false;
+        this.current.key.unsetActive();
+      } else if (event.code === 'ShiftRight') {
+        this.state.isShiftRightPressed = false;
+        this.current.key.unsetActive();
+      }
     }
   }
 }

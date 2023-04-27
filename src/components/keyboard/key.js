@@ -93,11 +93,11 @@ export default class Key {
   #setChar() {
     switch (this.currentCase) {
       case 'caps':
-        this.char = this.attributes.lang[this.currentLang][this.currentCase]
+        this.char = this.attributes.lang[this.currentLang].caps
           ?? this.attributes.lang[this.currentLang].caseUp;
         break;
       case 'shiftCaps':
-        this.char = this.attributes.lang[this.currentLang][this.currentCase]
+        this.char = this.attributes.lang[this.currentLang].shiftCaps
           ?? this.attributes.lang[this.currentLang].caseDown;
         break;
       default:
