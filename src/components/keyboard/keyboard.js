@@ -13,7 +13,7 @@ export default class Keyboard {
       isShiftRightPressed: false,
       isCapsLockPressed: false,
       currentKey: null,
-      case: 'caseUp',
+      case: 'caseDown',
       lang: 'rus',
     };
 
@@ -67,8 +67,11 @@ export default class Keyboard {
       });
 
       row.forEach((attributes) => {
+        const isService = KEYS.SERVICE_KEYS.includes(attributes.className);
+
         const key = new Key(
           { attributes },
+          isService,
           this.state.lang,
           this.state.case,
         );
@@ -84,7 +87,59 @@ export default class Keyboard {
 
     this.keyboard = keyboard;
     centralizer.append(keyboard);
+
+    const description = DomBuilder.createElement({
+      element: 'p',
+      innerText: 'Клавиатура создана в операционной системе Windows',
+      classList: ['description'],
+    });
+    centralizer.append(description);
+
+    const language = DomBuilder.createElement({
+      element: 'p',
+      innerText: 'Для переключения языка комбинация: левыe ctrl + alt',
+      classList: ['language'],
+    });
+    centralizer.append(language);
+
     body.append(centralizer);
+  }
+
+  implementKey(keyKode, key) {
+    switch (keyKode) {
+      case 'Backspace':
+        break;
+      case 'Delete':
+        break;
+      case 'Tab':
+        break;
+      case 'Enter':
+        break;
+      case 'CapsLock':
+        this.toggleCaps();
+        break;
+      case 'ShiftLeft':
+        break;
+      case 'ShiftRight':
+        break;
+      default:
+        throw new Error('Unknown service key has been pressed');
+    }
+  }
+
+  toggleCaps() {
+    this.state.isCapsLockPressed = !this.state.isCapsLockPressed;
+    if (this.state.isCapsLockPressed) {
+      this.keys.CapsLock.setActive();
+    } else {
+      this.keys.CapsLock.unsetActive();
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    for (const key of Object.values(this.keys)) {
+      key.toggleCaps();
+    }
+
+    console.dir(this.keys);
   }
 
   mouseDown(event) {
@@ -92,15 +147,21 @@ export default class Keyboard {
 
     if (!target) return;
 
-    const keyCode = target.classList[target.classList.length - 1];
+    const keyCode = target.dataset.keycode;
     const key = this.keys[keyCode];
     this.state.currentKey = key;
 
-    this.textarea.textContent += key.getKey();
-    key.flash();
+    if (key.isServiceKey()) {
+      this.implementKey(keyCode, key);
+    } else {
+      key.setActive();
+      this.textarea.textContent += key.getChar();
+    }
   }
 
   mouseUp() {
-    this.state.currentKey.unflash();
+    if (!this.state.currentKey.isServiceKey()) {
+      this.state.currentKey.unsetActive();
+    }
   }
 }

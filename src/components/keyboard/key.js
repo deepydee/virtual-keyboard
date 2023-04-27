@@ -1,10 +1,17 @@
 import DomBuilder from '../../helpers/DomBuilder.js';
 
 export default class Key {
-  constructor({ attributes }, currentLang = 'eng', currentCase = 'caseDown') {
+  constructor(
+    { attributes },
+    isService,
+    currentLang = 'eng',
+    currentCase = 'caseDown',
+  ) {
     this.attributes = attributes;
+    this.isService = isService;
     this.currentLang = currentLang;
     this.currentCase = currentCase;
+    this.#setChar();
     this.key = null;
   }
 
@@ -12,6 +19,7 @@ export default class Key {
     const key = DomBuilder.createElement({
       element: 'div',
       classList: ['keyboard--key', 'key', this.attributes.className],
+      attributes: { 'data-keycode': this.attributes.className },
     });
 
     // eslint-disable-next-line no-restricted-syntax
@@ -46,7 +54,7 @@ export default class Key {
           && this.currentCase === 'caps'
             ? ['caps']
             : ['caps', 'hidden'],
-          innerText: langSettings.caps,
+          innerText: langSettings.caps ?? langSettings.caseUp,
         }),
         DomBuilder.createElement({
           element: 'span',
@@ -54,7 +62,7 @@ export default class Key {
           && this.currentCase === 'shiftCaps'
             ? ['shiftCaps']
             : ['shiftCaps', 'hidden'],
-          innerText: langSettings.shiftCaps,
+          innerText: langSettings.shiftCaps ?? langSettings.caseUp,
         }),
       ];
 
@@ -66,15 +74,64 @@ export default class Key {
     return key;
   }
 
-  flash() {
+  #setChar() {
+    switch (this.currentCase) {
+      case 'caps':
+        this.char = this.attributes.lang[this.currentLang][this.currentCase]
+          ?? this.attributes.lang[this.currentLang].caseUp;
+        break;
+      case 'shiftCaps':
+        this.char = this.attributes.lang[this.currentLang][this.currentCase]
+          ?? this.attributes.lang[this.currentLang].caseDown;
+        break;
+      default:
+        this.char = this.attributes.lang[this.currentLang][this.currentCase];
+        break;
+    }
+  }
+
+  getChar() {
+    return this.char;
+  }
+
+  toggleCaps() {
+    this.currentCase = this.currentCase === 'caps'
+      ? 'caseDown'
+      : 'caps';
+
+    this.#setChar();
+    this.rerender();
+  }
+
+  rerender() {
+    [...this.key.children].forEach((el) => {
+      if (el.classList.contains(this.currentLang)) {
+        [...el.children].map((e) => (e.classList.contains(this.currentCase)
+          ? e.classList.remove('hidden')
+          : e.classList.add('hidden')));
+      }
+    });
+  }
+
+  toggleLang() {
+    this.currentCase = this.currentLang === 'eng'
+      ? 'rus'
+      : 'eng';
+  }
+
+  setActive() {
     this.key.classList.add('active');
   }
 
-  unflash() {
+  unsetActive() {
     this.key.classList.remove('active');
   }
 
-  getKey() {
-    return this.attributes.lang[this.currentLang][this.currentCase];
+  toggleActive() {
+    this.key.classList.toggle('active');
+  }
+
+  isServiceKey() {
+    return this.isService;
   }
 }
