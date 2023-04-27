@@ -166,6 +166,8 @@ export default class Keyboard {
           }
           break;
         case 'Tab':
+          this.current.char = '    ';
+          insertChar();
           break;
         case 'Enter':
           break;
