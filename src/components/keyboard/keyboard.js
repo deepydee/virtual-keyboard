@@ -158,6 +158,12 @@ export default class Keyboard {
           }
           break;
         case 'Delete':
+          if (start >= 0 && start <= text.length) {
+            text = text.slice(0, start) + text.slice(start + 1, text.length);
+            this.textarea.value = text;
+            this.textarea.selectionStart = start;
+            this.textarea.selectionEnd = start;
+          }
           break;
         case 'Tab':
           break;
