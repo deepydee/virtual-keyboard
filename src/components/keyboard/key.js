@@ -110,10 +110,8 @@ export default class Key {
     return this.attributes.className;
   }
 
-  toggleCaps() {
-    this.currentCase = this.currentCase === 'caps'
-      ? 'caseDown'
-      : 'caps';
+  changeCase(newCase) {
+    this.currentCase = newCase;
 
     this.#setChar();
     this.rerender();

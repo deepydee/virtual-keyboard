@@ -130,34 +130,63 @@ export default class Keyboard {
     body.append(centralizer);
   }
 
-  implementSerciceKey(keyCode, key) {
-    if (!this.#isService(keyCode)) return;
+  #applyKey() {
+    let text = this.textarea.value;
+    const start = this.textarea.selectionStart;
 
-    switch (keyCode) {
-      case 'Backspace':
-        break;
-      case 'Delete':
-        break;
-      case 'Tab':
-        break;
-      case 'Enter':
-        break;
-      case 'CapsLock':
-        this.toggleCaps();
-        break;
-      case 'ShiftLeft':
-        break;
-      case 'ShiftRight':
-        break;
-      default:
+    const insertChar = () => {
+      if (start > 0 && start <= text.length) {
+        this.textarea.value = text.slice(0, start)
+          + this.current.char
+          + text.slice(start, text.length);
+
+        this.textarea.selectionStart = start + this.current.char.length;
+        this.textarea.selectionEnd = start + this.current.char.length;
+      } else {
+        this.textarea.value += this.current.char;
+      }
+    };
+
+    if (this.#isServiceKey(this.current.code)) {
+      switch (this.current.code) {
+        case 'Backspace':
+          if (start > 0 && start <= text.length) {
+            text = text.slice(0, start - 1) + text.slice(start, text.length);
+            this.textarea.value = text;
+            this.textarea.selectionStart = start - 1;
+            this.textarea.selectionEnd = start - 1;
+          }
+          break;
+        case 'Delete':
+          break;
+        case 'Tab':
+          break;
+        case 'Enter':
+          break;
+        case 'CapsLock':
+          this.toggleCaps();
+          break;
+        case 'ShiftLeft':
+          break;
+        case 'ShiftRight':
+          break;
+        default:
+      }
+    } else {
+      insertChar();
     }
   }
 
-  #isService(code) {
+  // eslint-disable-next-line class-methods-use-this
+  #isServiceKey(code) {
     return KEYS.SERVICE_KEYS.includes(code);
   }
 
   toggleCaps() {
+    this.state.case = this.state.case === 'caps'
+      ? 'caseDown'
+      : 'caps';
+
     this.state.isCapsLockPressed = !this.state.isCapsLockPressed;
     if (this.state.isCapsLockPressed) {
       this.keys.CapsLock.setActive();
@@ -166,10 +195,25 @@ export default class Keyboard {
     }
 
     for (const key of Object.values(this.keys)) {
-      key.toggleCaps();
+      key.changeCase(this.state.case);
     }
+    // console.dir(this.keys);
+  }
 
-    console.dir(this.keys);
+  // updateKeysState(callback, ...args) {
+  //   for (const key of Object.values(this.keys)) {
+  //     key.callback.call(this, ...args);
+  //   }
+  // }
+
+  toggleCase() {
+    this.state.case = this.state.case === 'caseDown'
+      ? 'caseUp'
+      : 'caseDown';
+
+    for (const key of Object.values(this.keys)) {
+      key.changeCase(this.state.case);
+    }
   }
 
   toggleLanguage() {
@@ -196,21 +240,6 @@ export default class Keyboard {
     this.current.event = event;
   }
 
-  #processKeyDown() {
-    if (this.#isService(this.current.code)) {
-      this.implementSerciceKey(this.current.code, this.current.key);
-    } else {
-      this.current.key.setActive();
-      this.textarea.textContent += this.current.key.getChar();
-    }
-  }
-
-  #processKeyUp() {
-    if (!this.#isService(this.current.char)) {
-      this.current.key.unsetActive();
-    }
-  }
-
   #mouseDown(event) {
     const target = event.target.closest('.key');
     if (!target) return;
@@ -220,11 +249,33 @@ export default class Keyboard {
       event,
     });
 
-    this.#processKeyDown(this.current.code);
+    this.#applyKey();
+
+    if (this.current.code !== 'CapsLock') {
+      this.current.key.setActive();
+    }
   }
 
-  #mouseUp() {
-    this.#processKeyUp();
+  #mouseUp(event) {
+    const target = event.target.closest('.key');
+    if (!target) return;
+
+    this.#updateCurrentKeyState({
+      code: target.dataset.keycode,
+      event,
+    });
+
+    if (this.current.code !== 'CapsLock') {
+      this.current.key.unsetActive();
+    }
+
+    if (this.state.isShiftLeftPressed && this.current.code === 'ShiftLeft') {
+      this.state.isShiftLeftPressed = false;
+      this.toggleCase();
+    } else if (this.state.isShiftRightPressed && this.current.code === 'ShiftRight') {
+      this.state.isShiftRightPressed = false;
+      this.toggleCase();
+    }
   }
 
   #keyDown(event) {
@@ -235,10 +286,33 @@ export default class Keyboard {
       event,
     });
 
-    this.#processKeyDown(this.current.code);
+    this.#applyKey();
+
+    if (this.current.code !== 'CapsLock') {
+      this.current.key.setActive();
+    }
+
+    if (this.current.code === 'MetaLeft') {
+      this.current.key.setActive();
+      setTimeout(() => {
+        this.current.key.unsetActive();
+      }, 500);
+    } else if (['ShiftLeft', 'ShiftRight'].includes(this.current.code)) {
+      this.current.key.setActive();
+    }
   }
 
-  #keyUp() {
-    this.#processKeyUp();
+  #keyUp(event) {
+    if (event.code !== 'CapsLock') {
+      this.current.key.unsetActive();
+    }
+
+    if (event.code === 'ShiftLeft') {
+      this.state.isShiftLeftPressed = false;
+      this.current.key.unsetActive();
+    } else if (event.code === 'ShiftRight') {
+      this.state.isShiftRightPressed = false;
+      this.current.key.unsetActive();
+    }
   }
 }
