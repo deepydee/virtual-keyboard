@@ -1,0 +1,477 @@
+import KEYS from '../../data/keys.js';
+import LANGUAGES from './common/languages.js';
+import CASES from './common/cases.js';
+import rusFlagSvg from './assets/svg/rus.svg';
+import engFlagSvg from './assets/svg/eng.svg';
+import Key from './key.js';
+import DomBuilder from '../../helpers/DomBuilder.js';
+
+/**
+ * Keyboard class
+ * @class
+ */
+export default class Keyboard {
+  /**
+   * @constructor
+   */
+  constructor() {
+    this.keyboard = null;
+    this.keys = {};
+    this.textarea = null;
+
+    this.state = {
+      isShiftLeftPressed: false,
+      isShiftRightPressed: false,
+      isCapsLockPressed: false,
+      currentKey: null,
+      case: CASES.caseDown,
+      lang: LANGUAGES.eng,
+    };
+
+    this.current = {
+      key: null,
+      code: null,
+      event: null,
+      char: null,
+    };
+
+    this.previous = {
+      key: null,
+      code: null,
+      event: null,
+      char: null,
+    };
+  }
+
+  /**
+   * Initialize new keyboard
+   * @public
+   * @returns {void}
+   */
+  init() {
+    this.#render();
+    this.#initLanguage();
+
+    this.mouseDownHandler = this.#mouseDown.bind(this);
+    this.mouseUpHandler = this.#mouseUp.bind(this);
+    this.keyDownHandler = this.#keyDown.bind(this);
+    this.keyUpHandler = this.#keyUp.bind(this);
+    this.toggleLanguageOnClickHandler = this.toggleLanguage.bind(this);
+
+    this.keyboard.addEventListener('mousedown', this.mouseDownHandler);
+    this.keyboard.addEventListener('mouseup', this.mouseUpHandler);
+    document.addEventListener('keydown', this.keyDownHandler);
+    document.addEventListener('keyup', this.keyUpHandler);
+    this.flag.addEventListener('click', this.toggleLanguageOnClickHandler);
+  }
+
+  /**
+   * Set initial language
+   * @private
+   * @returns {void}
+   */
+  #initLanguage() {
+    this.state.lang = localStorage.lang ?? this.state.lang;
+    this.#updateLanguage();
+    this.#setLanguageFlag();
+  }
+
+  /**
+   * Render initial keyboard DOM structure
+   * @private
+   * @returns {void}
+   */
+  #render() {
+    const { body } = document;
+    body.classList.add('body');
+    const centralizer = DomBuilder.createElement({
+      element: 'div',
+      classList: ['centralizer'],
+    });
+
+    const heading = DomBuilder.createElement({
+      element: 'h1',
+      classList: ['title'],
+      innerText: 'RSS Виртуальная клавиатура',
+    });
+    centralizer.append(heading);
+
+    const textarea = DomBuilder.createElement({
+      element: 'textarea',
+      classList: ['body--textarea', 'textarea'],
+      attributes: {
+        id: 'textarea',
+        rows: '5',
+        cols: '50',
+      },
+    });
+
+    textarea.autofocus = true;
+    this.textarea = textarea;
+    centralizer.append(textarea);
+
+    const keyboard = DomBuilder.createElement({
+      element: 'div',
+      classList: ['body--keyboard', 'keyboard'],
+      attributes: { id: 'keyboard' },
+    });
+
+    KEYS.ROWS.forEach((row) => {
+      const kbdRow = DomBuilder.createElement({
+        element: 'div',
+        classList: ['keyboard--row', 'row'],
+      });
+
+      row.forEach((attributes) => {
+        const key = new Key(
+          { attributes },
+          this.state.lang,
+          this.state.case,
+        );
+        this.keys[attributes.className] = key;
+
+        kbdRow.append(
+          key.render(),
+        );
+      });
+
+      keyboard.append(kbdRow);
+    });
+
+    this.keyboard = keyboard;
+    centralizer.append(keyboard);
+
+    const description = DomBuilder.createElement({
+      element: 'p',
+      innerText: 'Клавиатура создана в операционной системе Windows',
+      classList: ['description'],
+    });
+    centralizer.append(description);
+
+    const language = DomBuilder.createElement({
+      element: 'div',
+      classList: ['language'],
+    });
+
+    const languageLink = DomBuilder.createElement({
+      element: 'a',
+      classList: ['flag'],
+    });
+    languageLink.href = '#!';
+
+    this.flag = DomBuilder.createElement({
+      element: 'img',
+    });
+
+    this.#setLanguageFlag();
+
+    const langDescription = DomBuilder.createElement({
+      element: 'span',
+      innerText: 'Для переключения языка комбинация: левыe Ctrl + Shift, либо клик по флагу',
+    });
+
+    languageLink.append(this.flag);
+    language.append(languageLink, langDescription);
+
+    centralizer.append(language);
+
+    body.append(centralizer);
+  }
+
+  /**
+   * Set language toggle flag current state
+   * @private
+   * @returns {void}
+   */
+  #setLanguageFlag() {
+    this.flag.src = this.state.lang === LANGUAGES.eng
+      ? engFlagSvg
+      : rusFlagSvg;
+  }
+
+  /**
+   * Apply current key to textarea
+   * @private
+   * @returns {void}
+   */
+  #applyKey() {
+    let text = this.textarea.value;
+    const start = this.textarea.selectionStart;
+
+    const insertChar = () => {
+      if (start > 0 && start <= text.length) {
+        this.textarea.value = text.slice(0, start)
+          + this.current.char
+          + text.slice(start, text.length);
+
+        this.textarea.selectionStart = start + this.current.char.length;
+        this.textarea.selectionEnd = start + this.current.char.length;
+      } else {
+        this.textarea.value += this.current.char;
+      }
+    };
+
+    if (this.#isServiceKey(this.current.code)) {
+      switch (this.current.code) {
+        case 'Backspace':
+          if (start > 0 && start <= text.length) {
+            text = text.slice(0, start - 1) + text.slice(start, text.length);
+            this.textarea.value = text;
+            this.textarea.selectionStart = start - 1;
+            this.textarea.selectionEnd = start - 1;
+          }
+          break;
+        case 'Delete':
+          if (start >= 0 && start <= text.length) {
+            text = text.slice(0, start) + text.slice(start + 1, text.length);
+            this.textarea.value = text;
+            this.textarea.selectionStart = start;
+            this.textarea.selectionEnd = start;
+          }
+          break;
+        case 'Tab':
+          this.current.char = '    ';
+          insertChar();
+          break;
+        case 'Enter':
+          this.current.char = '\n';
+          insertChar();
+          break;
+        case 'CapsLock':
+          this.toggleCaps();
+          break;
+        case 'ShiftLeft':
+          if (!this.state.isShiftLeftPressed
+              && !this.state.isShiftRightPressed) {
+            this.state.isShiftLeftPressed = true;
+            this.current.key.setActive();
+            this.toggleCase();
+          }
+          break;
+        case 'ShiftRight':
+          if (!this.state.isShiftRightPressed
+              && !this.state.isShiftLeftPressed) {
+            this.state.isShiftRightPressed = true;
+            this.current.key.setActive();
+            this.toggleCase();
+          }
+          break;
+        default:
+      }
+    } else {
+      insertChar();
+    }
+
+    if ((this.current.event.ctrlKey || this.current.event.metaKey)
+       && this.current.event.shiftKey) {
+      this.toggleLanguage();
+    }
+  }
+
+  /**
+   * Checks whether current keyCode belongs to specials
+   * @private
+   * @param {string} code keyCode
+   * @returns {boolean}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  #isServiceKey(code) {
+    return KEYS.SERVICE_KEYS.includes(code);
+  }
+
+  /**
+   * Toggle current case to Caps/CaseDown
+   * @public
+   * @returns {void}
+   */
+  toggleCaps() {
+    this.state.case = this.state.case === CASES.caps
+      ? CASES.caseDown
+      : CASES.caps;
+
+    if (this.state.isCapsLockPressed && !this.current.event.repeat) {
+      this.removeActiveState();
+      this.state.isCapsLockPressed = false;
+    } else {
+      this.keys.CapsLock.setActive();
+      this.state.isCapsLockPressed = true;
+    }
+
+    Object.values(this.keys)
+      .forEach((key) => key.changeCase(this.state.case));
+  }
+
+  /**
+   * Toggle current case to CaseUp/CaseDown
+   * @public
+   * @returns {void}
+   */
+  toggleCase() {
+    this.state.case = this.state.case === CASES.caseDown
+      ? CASES.caseUp
+      : CASES.caseDown;
+
+    Object.values(this.keys)
+      .forEach((key) => key.changeCase(this.state.case));
+  }
+
+  /**
+   * Toggle current language due to enum<LANGUAGES>
+   * @public
+   * @returns {void}
+   */
+  toggleLanguage() {
+    this.state.lang = this.state.lang === LANGUAGES.eng
+      ? LANGUAGES.rus
+      : LANGUAGES.eng;
+
+    localStorage.setItem('lang', this.state.lang);
+    this.#updateLanguage();
+  }
+
+  /**
+   * Update all key's language state
+   * @private
+   * @returns {void}
+   */
+  #updateLanguage() {
+    Object.values(this.keys)
+      .forEach((key) => key.changeLanguage(this.state.lang));
+
+    this.flag.src = this.state.lang === LANGUAGES.eng
+      ? engFlagSvg
+      : rusFlagSvg;
+  }
+
+  /**
+   * Update current key state
+   * @private
+   * @param {object} code: {string} current key keyCode,
+   * event {event} current key event
+   * @returns {void}
+   */
+  #updateCurrentKeyState({ code, event = null }) {
+    this.previous = { ...this.current };
+
+    this.current.code = code;
+    this.current.key = this.keys[code];
+    this.current.char = this.current.key.getChar();
+    this.current.event = event;
+  }
+
+  /**
+   * Remove active state from current and previous key
+   * @public
+   * @returns {void}
+   */
+  removeActiveState() {
+    if (this.current.key) {
+      if (this.previous.key && this.previous.key.isActive()) {
+        this.previous.key.unsetActive();
+      }
+
+      this.current.key.unsetActive();
+    }
+  }
+
+  /**
+   * Mousedown event handler
+   * @param  {document#mousedown:mousedown} event
+   * @listens document#mousedown
+   */
+  #mouseDown(event) {
+    const target = event.target.closest('.key');
+    if (!target) return;
+
+    this.#updateCurrentKeyState({
+      code: target.dataset.keycode,
+      event,
+    });
+
+    this.#applyKey();
+
+    if (this.current.code !== 'CapsLock') {
+      this.current.key.setActive();
+    }
+
+    event.preventDefault();
+  }
+
+  /**
+   * Mouseup event handler
+   * @param  {document#mouseup:mouseup} event
+   * @listens document#mouseup
+   */
+  #mouseUp(event) {
+    const target = event.target.closest('.key');
+    if (!target) return;
+
+    this.#updateCurrentKeyState({
+      code: target.dataset.keycode,
+      event,
+    });
+
+    if (!['CapsLock', 'ShiftLeft', 'ShiftRight'].includes(this.current.code)) {
+      this.removeActiveState();
+    }
+
+    if (this.state.isShiftLeftPressed && this.current.code === 'ShiftLeft') {
+      this.state.isShiftLeftPressed = false;
+      this.removeActiveState();
+      this.toggleCase();
+    } else if (this.state.isShiftRightPressed && this.current.code === 'ShiftRight') {
+      this.state.isShiftRightPressed = false;
+      this.removeActiveState();
+      this.toggleCase();
+    }
+  }
+
+  /**
+   * Keydown event handler
+   * @param  {document#keydown:keydown} event
+   * @listens document#keydown
+   */
+  #keyDown(event) {
+    event.preventDefault();
+
+    const isKeyExistsWithin = this.keyboard.querySelector(`.${event.code}`);
+
+    if (isKeyExistsWithin) {
+      this.#updateCurrentKeyState({
+        code: event.code,
+        event,
+      });
+
+      this.#applyKey();
+
+      if (this.current.code !== 'CapsLock') {
+        this.current.key.setActive();
+      }
+    }
+  }
+
+  /**
+   * Keyup event handler
+   * @param  {document#keyup:keyup} event
+   * @listens document#keyup
+   */
+  #keyUp(event) {
+    const isKeyExistsWithin = this.keyboard.querySelector(`.${event.code}`);
+
+    if (isKeyExistsWithin) {
+      if (event.code !== 'CapsLock') {
+        this.removeActiveState();
+      }
+
+      if (event.code === 'ShiftLeft') {
+        this.state.isShiftLeftPressed = false;
+        this.removeActiveState();
+        this.toggleCase();
+      } else if (event.code === 'ShiftRight') {
+        this.state.isShiftRightPressed = false;
+        this.removeActiveState();
+        this.toggleCase();
+      }
+    }
+  }
+}
