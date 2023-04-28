@@ -40,7 +40,7 @@ module.exports = {
         },
       },
       {
-        test: /\.(png|svg|jpeg|jpg|gif)$/i,
+        test: /\.(png|svg|jpeg|jpg|gif|ico)$/i,
         type: 'asset/resource',
       },
     ],
@@ -48,7 +48,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       title: 'RSS Virtual Keyboard',
-      favicon: 'src/favicon.ico',
+      favicon: './src/favicon.ico',
       filename: 'index.html',
     }),
   ],

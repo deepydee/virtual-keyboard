@@ -135,4 +135,8 @@ export default class Key {
   unsetActive() {
     this.key.classList.remove('active');
   }
+
+  isActive() {
+    return this.key.classList.contains('active');
+  }
 }

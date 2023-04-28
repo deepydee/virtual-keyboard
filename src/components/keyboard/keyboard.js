@@ -165,8 +165,6 @@ export default class Keyboard {
     let text = this.textarea.value;
     const start = this.textarea.selectionStart;
 
-    console.log('before ', text, this.textarea.selectionStart, this.textarea.selectionEnd);
-
     const insertChar = () => {
       if (start > 0 && start <= text.length) {
         this.textarea.value = text.slice(0, start)
@@ -232,8 +230,6 @@ export default class Keyboard {
     if (this.current.event.ctrlKey && this.current.event.shiftKey) {
       this.toggleLanguage();
     }
-
-    console.log('after ', text, this.textarea.selectionStart, this.textarea.selectionEnd);
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -250,7 +246,8 @@ export default class Keyboard {
     if (this.state.isCapsLockPressed) { // && !this.current.event.repeat
       this.keys.CapsLock.setActive();
     } else {
-      this.keys.CapsLock.unsetActive();
+      // this.keys.CapsLock.unsetActive();
+      this.removeActiveState();
     }
 
     for (const key of Object.values(this.keys)) {
@@ -310,6 +307,8 @@ export default class Keyboard {
     if (this.current.code !== 'CapsLock') {
       this.current.key.setActive();
     }
+
+    event.preventDefault();
   }
 
   #mouseUp(event) {
@@ -321,15 +320,17 @@ export default class Keyboard {
       event,
     });
 
-    if (this.current.code !== 'CapsLock') {
-      this.current.key.unsetActive();
+    if (!['CapsLock', 'ShiftLeft', 'ShiftRight'].includes(this.current.code)) {
+      this.removeActiveState();
     }
 
     if (this.state.isShiftLeftPressed && this.current.code === 'ShiftLeft') {
       this.state.isShiftLeftPressed = false;
+      this.removeActiveState();
       this.toggleCase();
     } else if (this.state.isShiftRightPressed && this.current.code === 'ShiftRight') {
       this.state.isShiftRightPressed = false;
+      this.removeActiveState();
       this.toggleCase();
     }
   }
@@ -350,15 +351,16 @@ export default class Keyboard {
       if (this.current.code !== 'CapsLock') {
         this.current.key.setActive();
       }
+    }
+  }
 
-      if (this.current.code === 'MetaLeft') {
-        this.current.key.setActive();
-        setTimeout(() => {
-          this.current.key.unsetActive();
-        }, 500);
-      } else if (['ShiftLeft', 'ShiftRight'].includes(this.current.code)) {
-        this.current.key.setActive();
+  removeActiveState() {
+    if (this.current.key) {
+      if (this.previous.key && this.previous.key.isActive()) {
+        this.previous.key.unsetActive();
       }
+
+      this.current.key.unsetActive();
     }
   }
 
@@ -367,15 +369,17 @@ export default class Keyboard {
 
     if (isKeyExistsWithin) {
       if (event.code !== 'CapsLock') {
-        this.current.key.unsetActive();
+        this.removeActiveState();
       }
 
       if (event.code === 'ShiftLeft') {
         this.state.isShiftLeftPressed = false;
-        this.current.key.unsetActive();
+        this.removeActiveState();
+        this.toggleCase();
       } else if (event.code === 'ShiftRight') {
         this.state.isShiftRightPressed = false;
-        this.current.key.unsetActive();
+        this.removeActiveState();
+        this.toggleCase();
       }
     }
   }
