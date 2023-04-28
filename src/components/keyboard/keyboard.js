@@ -1,10 +1,19 @@
 import KEYS from '../../data/keys.js';
+import LANGUAGES from './common/languages.js';
+import CASES from './common/cases.js';
 import rusFlagSvg from './assets/svg/rus.svg';
 import engFlagSvg from './assets/svg/eng.svg';
 import Key from './key.js';
 import DomBuilder from '../../helpers/DomBuilder.js';
 
+/**
+ * Keyboard class
+ * @class
+ */
 export default class Keyboard {
+  /**
+   * @constructor
+   */
   constructor() {
     this.keyboard = null;
     this.keys = {};
@@ -15,8 +24,8 @@ export default class Keyboard {
       isShiftRightPressed: false,
       isCapsLockPressed: false,
       currentKey: null,
-      case: 'caseDown',
-      lang: 'eng',
+      case: CASES.caseDown,
+      lang: LANGUAGES.eng,
     };
 
     this.current = {
@@ -34,6 +43,11 @@ export default class Keyboard {
     };
   }
 
+  /**
+   * Initialize new keyboard
+   * @public
+   * @returns {void}
+   */
   init() {
     this.#render();
     this.#initLanguage();
@@ -51,12 +65,22 @@ export default class Keyboard {
     this.flag.addEventListener('click', this.toggleLanguageOnClickHandler);
   }
 
+  /**
+   * Set initial language
+   * @private
+   * @returns {void}
+   */
   #initLanguage() {
     this.state.lang = localStorage.lang ?? this.state.lang;
     this.#updateLanguage();
     this.#setLanguageFlag();
   }
 
+  /**
+   * Render initial keyboard DOM structure
+   * @private
+   * @returns {void}
+   */
   #render() {
     const { body } = document;
     body.classList.add('body');
@@ -154,12 +178,22 @@ export default class Keyboard {
     body.append(centralizer);
   }
 
+  /**
+   * Set language toggle flag current state
+   * @private
+   * @returns {void}
+   */
   #setLanguageFlag() {
-    this.flag.src = this.state.lang === 'eng'
+    this.flag.src = this.state.lang === LANGUAGES.eng
       ? engFlagSvg
       : rusFlagSvg;
   }
 
+  /**
+   * Apply current key to textarea
+   * @private
+   * @returns {void}
+   */
   #applyKey() {
     let text = this.textarea.value;
     const start = this.textarea.selectionStart;
@@ -234,15 +268,26 @@ export default class Keyboard {
     }
   }
 
+  /**
+   * Checks whether current keyCode belongs to specials
+   * @private
+   * @param {string} code keyCode
+   * @returns {boolean}
+   */
   // eslint-disable-next-line class-methods-use-this
   #isServiceKey(code) {
     return KEYS.SERVICE_KEYS.includes(code);
   }
 
+  /**
+   * Toggle current case to Caps/CaseDown
+   * @public
+   * @returns {void}
+   */
   toggleCaps() {
-    this.state.case = this.state.case === 'caps'
-      ? 'caseDown'
-      : 'caps';
+    this.state.case = this.state.case === CASES.caps
+      ? CASES.caseDown
+      : CASES.caps;
 
     if (this.state.isCapsLockPressed && !this.current.event.repeat) {
       this.removeActiveState();
@@ -256,33 +301,55 @@ export default class Keyboard {
       .forEach((key) => key.changeCase(this.state.case));
   }
 
+  /**
+   * Toggle current case to CaseUp/CaseDown
+   * @public
+   * @returns {void}
+   */
   toggleCase() {
-    this.state.case = this.state.case === 'caseDown'
-      ? 'caseUp'
-      : 'caseDown';
+    this.state.case = this.state.case === CASES.caseDown
+      ? CASES.caseUp
+      : CASES.caseDown;
 
     Object.values(this.keys)
       .forEach((key) => key.changeCase(this.state.case));
   }
 
+  /**
+   * Toggle current language due to enum<LANGUAGES>
+   * @public
+   * @returns {void}
+   */
   toggleLanguage() {
-    this.state.lang = this.state.lang === 'eng'
-      ? 'rus'
-      : 'eng';
+    this.state.lang = this.state.lang === LANGUAGES.eng
+      ? LANGUAGES.rus
+      : LANGUAGES.eng;
 
     localStorage.setItem('lang', this.state.lang);
     this.#updateLanguage();
   }
 
+  /**
+   * Update all key's language state
+   * @private
+   * @returns {void}
+   */
   #updateLanguage() {
     Object.values(this.keys)
       .forEach((key) => key.changeLanguage(this.state.lang));
 
-    this.flag.src = this.state.lang === 'eng'
+    this.flag.src = this.state.lang === LANGUAGES.eng
       ? engFlagSvg
       : rusFlagSvg;
   }
 
+  /**
+   * Update current key state
+   * @private
+   * @param {object} code: {string} current key keyCode,
+   * event {event} current key event
+   * @returns {void}
+   */
   #updateCurrentKeyState({ code, event = null }) {
     this.previous = { ...this.current };
 
@@ -292,6 +359,26 @@ export default class Keyboard {
     this.current.event = event;
   }
 
+  /**
+   * Remove active state from current and previous key
+   * @public
+   * @returns {void}
+   */
+  removeActiveState() {
+    if (this.current.key) {
+      if (this.previous.key && this.previous.key.isActive()) {
+        this.previous.key.unsetActive();
+      }
+
+      this.current.key.unsetActive();
+    }
+  }
+
+  /**
+   * Mousedown event handler
+   * @param  {document#mousedown:mousedown} event
+   * @listens document#mousedown
+   */
   #mouseDown(event) {
     const target = event.target.closest('.key');
     if (!target) return;
@@ -310,6 +397,11 @@ export default class Keyboard {
     event.preventDefault();
   }
 
+  /**
+   * Mouseup event handler
+   * @param  {document#mouseup:mouseup} event
+   * @listens document#mouseup
+   */
   #mouseUp(event) {
     const target = event.target.closest('.key');
     if (!target) return;
@@ -334,6 +426,11 @@ export default class Keyboard {
     }
   }
 
+  /**
+   * Keydown event handler
+   * @param  {document#keydown:keydown} event
+   * @listens document#keydown
+   */
   #keyDown(event) {
     event.preventDefault();
 
@@ -353,16 +450,11 @@ export default class Keyboard {
     }
   }
 
-  removeActiveState() {
-    if (this.current.key) {
-      if (this.previous.key && this.previous.key.isActive()) {
-        this.previous.key.unsetActive();
-      }
-
-      this.current.key.unsetActive();
-    }
-  }
-
+  /**
+   * Keyup event handler
+   * @param  {document#keyup:keyup} event
+   * @listens document#keyup
+   */
   #keyUp(event) {
     const isKeyExistsWithin = this.keyboard.querySelector(`.${event.code}`);
 
