@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import KEYS from '../../data/keys.js';
 import rusFlagSvg from './assets/svg/rus.svg';
 import engFlagSvg from './assets/svg/eng.svg';
@@ -208,14 +207,16 @@ export default class Keyboard {
           this.toggleCaps();
           break;
         case 'ShiftLeft':
-          if (!this.state.isShiftLeftPressed && !this.state.isShiftRightPressed) {
+          if (!this.state.isShiftLeftPressed
+              && !this.state.isShiftRightPressed) {
             this.state.isShiftLeftPressed = true;
             this.current.key.setActive();
             this.toggleCase();
           }
           break;
         case 'ShiftRight':
-          if (!this.state.isShiftRightPressed && !this.state.isShiftLeftPressed) {
+          if (!this.state.isShiftRightPressed
+              && !this.state.isShiftLeftPressed) {
             this.state.isShiftRightPressed = true;
             this.current.key.setActive();
             this.toggleCase();
@@ -227,7 +228,8 @@ export default class Keyboard {
       insertChar();
     }
 
-    if (this.current.event.ctrlKey && this.current.event.shiftKey) {
+    if ((this.current.event.ctrlKey || this.current.event.metaKey)
+       && this.current.event.shiftKey) {
       this.toggleLanguage();
     }
   }
@@ -238,21 +240,20 @@ export default class Keyboard {
   }
 
   toggleCaps() {
-    this.state.isCapsLockPressed = !this.state.isCapsLockPressed;
     this.state.case = this.state.case === 'caps'
       ? 'caseDown'
       : 'caps';
 
-    if (this.state.isCapsLockPressed) { // && !this.current.event.repeat
-      this.keys.CapsLock.setActive();
-    } else {
-      // this.keys.CapsLock.unsetActive();
+    if (this.state.isCapsLockPressed && !this.current.event.repeat) {
       this.removeActiveState();
+      this.state.isCapsLockPressed = false;
+    } else {
+      this.keys.CapsLock.setActive();
+      this.state.isCapsLockPressed = true;
     }
 
-    for (const key of Object.values(this.keys)) {
-      key.changeCase(this.state.case);
-    }
+    Object.values(this.keys)
+      .forEach((key) => key.changeCase(this.state.case));
   }
 
   toggleCase() {
@@ -260,9 +261,8 @@ export default class Keyboard {
       ? 'caseUp'
       : 'caseDown';
 
-    for (const key of Object.values(this.keys)) {
-      key.changeCase(this.state.case);
-    }
+    Object.values(this.keys)
+      .forEach((key) => key.changeCase(this.state.case));
   }
 
   toggleLanguage() {
@@ -275,9 +275,8 @@ export default class Keyboard {
   }
 
   #updateLanguage() {
-    for (const key of Object.values(this.keys)) {
-      key.changeLanguage(this.state.lang);
-    }
+    Object.values(this.keys)
+      .forEach((key) => key.changeLanguage(this.state.lang));
 
     this.flag.src = this.state.lang === 'eng'
       ? engFlagSvg
